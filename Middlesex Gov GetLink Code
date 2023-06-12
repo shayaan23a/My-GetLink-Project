@@ -1,0 +1,95 @@
+# Starting URL
+url_start = 'https://www.middlesexcountynj.gov/'
+
+import re
+import os
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+
+
+# Function for getting links + sublinks
+def get_links(url):
+    # Send a GET request to the URL
+    response = requests.get(url)
+    
+    # Check if the request was successful
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        links = []
+        
+        # Find all anchor tags
+        for anchor in soup.find_all('a'):
+            link = anchor.get('href')
+            
+            # Check if the link is valid and not an empty string
+            if link and link != '#':
+                absolute_url = urljoin(url, link)
+                
+                if url_start in absolute_url:
+                    links.append(absolute_url)
+        
+        return links
+
+
+
+# Foldername creation if not already made
+foldername = 'middlesex links'
+if not os.path.exists(foldername):
+    os.makedirs(foldername)
+
+
+# Use get_links to get all links from the website
+all_links = get_links(url_start)
+
+# Fucntion to remove invalid characters from the filename
+def fix_filename(file_name):
+    return re.sub(r'[<>:"/\|?*]', '', file_name)
+
+# Naming the files something short with no special characters
+for link in all_links:
+    fixed_filename = fix_filename(link) # Fixes file name
+    file_path = os.path.join(foldername, fixed_filename) # Saves in appropriate path
+    
+    # Saving the link by using open() and putting it in write mode
+    with open(file_path, 'w') as file:
+        file.write(link)
+        print(f"Link saved: {link}") # Print is saved and the link that was saved
+
+
+
+
+
+#DOWNLADING PDFS
+
+foldername2 = 'middlesex pdfs'
+# Second foldername creation if not already made
+if not os.path.exists(foldername2):
+    os.makedirs(foldername2)
+
+
+# Using links that we have already gotten and stored in 'all_links'
+for website in all_links:
+    response = requests.get(website)
+
+
+    # Parse the HTML content using BeautifulSoup
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    # Makes sure that the link contians showpublisheddocument which indicates it is a pdf link
+    pdf_links = soup.find_all('a', href=lambda href: href and 'showpublisheddocument' in href)
+
+
+    # Download and save the PDFs
+    for link in pdf_links:
+        pdf_url = urljoin(website, link['href'])
+        pdf_name = fix_filename(pdf_url) # Fixes file name
+        pdf_path = os.path.join(foldername2, pdf_name) # Saves in appropriate path
+            
+        # Send a GET request to download the PDF
+        pdf_response = requests.get(pdf_url)
+            
+        # Save the PDF to the specified folder
+        with open(pdf_path, 'wb') as pdf_file:
+            pdf_file.write(pdf_response.content)
+            print(f"Downloaded: {pdf_name}") # Print if downloaded and the name of the pdf file
