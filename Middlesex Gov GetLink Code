@@ -1,11 +1,19 @@
-# Starting URL
-url_start = 'https://www.middlesexcountynj.gov/'
-
 import re
 import os
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+
+
+
+## Define Variables ##
+
+url_start = 'https://www.middlesexcountynj.gov/' # Main url
+
+foldername = 'links' # Folder name for saving links
+
+foldername2 = 'pdfs' # Folder name for saving pdfs
+
 
 
 # Function for getting links + sublinks
@@ -33,14 +41,14 @@ def get_links(url):
 
 
 
-# Foldername creation if not already made
-foldername = 'middlesex links'
+# Foldername creation if not already made for links
 if not os.path.exists(foldername):
     os.makedirs(foldername)
 
 
 # Use get_links to get all links from the website
 all_links = get_links(url_start)
+
 
 # Fucntion to remove invalid characters from the filename
 def fix_filename(file_name):
@@ -54,16 +62,17 @@ for link in all_links:
     # Saving the link by using open() and putting it in write mode
     with open(file_path, 'w') as file:
         file.write(link)
-        print(f"Link saved: {link}") # Print is saved and the link that was saved
+        print(f"Link saved: {link}") # Print if saved and the link that was saved
 
 
 
 
 
-#DOWNLADING PDFS
+# DOWNLADING PDFS
+# Second half of code
 
-foldername2 = 'middlesex pdfs'
-# Second foldername creation if not already made
+
+# Second foldername creation if not already made for pdfs
 if not os.path.exists(foldername2):
     os.makedirs(foldername2)
 
@@ -78,6 +87,7 @@ for website in all_links:
 
     # Makes sure that the link contians showpublisheddocument which indicates it is a pdf link
     pdf_links = soup.find_all('a', href=lambda href: href and 'showpublisheddocument' in href)
+    # ^This part is very specfic since most links that are pdfs end with '.pdf' but this url is different
 
 
     # Download and save the PDFs
